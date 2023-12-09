@@ -1,0 +1,9 @@
+.idea/
+build/
+Tests/
+Assets/
+utils/
+
+
+// how to main branch that already in the repo
+git checkout -b main

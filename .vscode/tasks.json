@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Execute",
+      "type": "shell",
+      "command": "cmake",
+      // cmake build command with arguments
+      "args": [
+        "-G",
+        "MinGW Makefiles",
+        "-S",
+        "${workspaceFolder}",
+        "-B",
+        "${workspaceFolder}/build",
+        "&&",
+        "cmake",
+        "--build",
+        "${workspaceFolder}/build",
+        "--target",
+        "App",
+        "--",
+        "-j",
+        "4",
+        "&&",
+        "cd",
+        "${workspaceFolder}/build",
+        "&&",
+        "./App.exe"
+      ],
+      "group": {
+        "kind": "build"
+      },
+      "problemMatcher": "$gcc"
+    }
+  ]
+}

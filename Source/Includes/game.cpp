@@ -2,28 +2,59 @@
 
 #include <GL/glut.h>
 
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <iostream>
 #include <string>
-
-// #ifdef _WIN32
-// #include <windows.h>
-// #else
-// #include <unistd.h>
-// #endif
+#include <thread>
 
 #define font GLUT_BITMAP_HELVETICA_18
 
 const int SHAPES[7][4][4] = {
-    0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,  // I
-    0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0,  // J
-    0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0};
+
+    {// I
+     {0, 0, 0, 0},
+     {1, 1, 1, 1},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}},
+
+    {// J
+     {1, 0, 0, 0},
+     {1, 1, 1, 0},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}},
+
+    {// L
+     {0, 0, 1, 0},
+     {1, 1, 1, 0},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}},
+
+    {// O
+     {0, 1, 1, 0},
+     {0, 1, 1, 0},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}},
+
+    {// S
+     {0, 1, 1, 0},
+     {1, 1, 0, 0},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}},
+
+    {// T
+     {0, 1, 0, 0},
+     {1, 1, 1, 0},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}},
+
+    {// Z
+     {1, 1, 0, 0},
+     {0, 1, 1, 0},
+     {0, 0, 0, 0},
+     {0, 0, 0, 0}}};
 
 const Color colors[] = {
     1.0f, 0.0f, 0.0f,  // I
@@ -34,12 +65,6 @@ const Color colors[] = {
     0.5f, 0.0f, 1.0f,
     0.0f, 1.0f, 1.0f};
 
-Game::Game() : x(3), y(0) {
-  memset(shape, 0, sizeof(shape));
-  memset(grid, 0, sizeof(grid));
-  randomTetris();
-}
-
 void Game::randomTetris() {
   srand(time(NULL));
   int random = rand() % 7;
@@ -48,16 +73,21 @@ void Game::randomTetris() {
   color = colors[random];
 }
 
+Game::Game() : x(3), y(0), score(0), level(1) {
+  memset(shape, 0, sizeof(shape));
+  memset(grid, 0, sizeof(grid));
+  randomTetris();
+}
+
 // Color Game::getColor() { return color; }
 
 void Game::drawGrid() {
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
       if (grid[i][j][0] != 0 || grid[i][j][1] != 0 || grid[i][j][2] != 0) {
-        int x1 = j * 8, y1 = i * 8;    // upper left
-        int x2 = x1 + 8, y2 = y1 + 8;  // down right
+        int x1 = j * 10, y1 = i * 10;    // upper left
+        int x2 = x1 + 10, y2 = y1 + 10;  // down right
 
-        // شكل
         glColor3f(grid[i][j][0], grid[i][j][1], grid[i][j][2]);
         glBegin(GL_QUADS);
         glVertex2f(x1, y1);
@@ -66,7 +96,6 @@ void Game::drawGrid() {
         glVertex2f(x1, y2);
         glEnd();
 
-        // شبكة
         glColor3f(0.0, 0.0, 0.0);
         glBegin(GL_LINE_LOOP);
         glVertex2f(x1, y1);
@@ -83,8 +112,9 @@ void Game::drawTetris() {
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++)
       if (shape[i][j] == 1) {
-        int x1 = (j + x) * 8, y1 = (i + y) * 8;
-        int x2 = x1 + 8, y2 = y1 + 8;
+        int x1 = (j + x) * 10, y1 = (i + y) * 10;
+        int x2 = x1 + 10, y2 = y1 + 10;
+
         glColor3f(color.r, color.g, color.b);
         glBegin(GL_QUADS);
         glVertex2f(x1, y1);
@@ -133,14 +163,7 @@ void Game::drawScore() {
   glColor3f(0.0, 0.0, 0.0);
   glRasterPos2f(10, 10);
   std::string scoreStr = "Score: " + std::to_string(score);
-  for (int i = 0; scoreStr[i] != '\0'; ++i) {
-    glPushMatrix();
-    glTranslatef(i * .0f, 0.0f, 0.0f);  // Adjust the offset as needed
-    glutBitmapCharacter(font, scoreStr[i]);
-    glPopMatrix();
-  }
-
-  glFlush();
+  for (const char c : scoreStr) glutBitmapCharacter(font, c);
 }
 
 void Game::resetLevel() {
@@ -162,11 +185,15 @@ void Game::rotate() {
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++)
       shape[i][j] = tmp[3 - j][i];
+
+
   if (collision() != -1) memcpy(shape, tmp, sizeof(shape));
 }
 
 void Game::removeLine() {
+
   int linesCleared = 0;
+
   for (int i = 19; i > 0; i--) {
     int count = 0;
     for (int j = 0; j < 10; j++)
@@ -181,10 +208,10 @@ void Game::removeLine() {
         if (grid[i][j][0] == 1 || grid[i][j][1] == 1 || grid[i][j][2] == 1) count++;
 
       if (count == 10) {
-        for (int t = i; t > 0; t--)
+        for (int j = i; j > 0; j--)
           for (int k = 0; k < 10; k++)
             for (int l = 0; l < 3; l++)
-              grid[t][k][l] = grid[t - 1][k][l];
+              grid[j][k][l] = grid[j - 1][k][l];
         i++;
       }
     }
@@ -218,7 +245,7 @@ void Game::levelUp() {
 
 bool Game::isGameOver() {
   for (int i = 0; i < 10; i++)
-    if (grid[4][i][0] == 1 || grid[4][i][1] == 1 || grid[4][i][2] == 1) return 1;
+    if (grid[3][i][0] == 1 || grid[3][i][1] == 1 || grid[3][i][2] == 1) return 1;
   return 0;
 }
 

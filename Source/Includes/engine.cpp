@@ -3,8 +3,34 @@
 #include <GL/freeglut.h>
 #include <GL/glut.h>
 
-Engine::Engine() : speed(200), level(1), isPaused(0) {
+#include <chrono>
+#include <thread>
+
+Engine::Engine() : speed(300), level(1), isPaused(0) {
   srand(time(NULL));
+}
+
+// what is thread mean ?
+// it's a function that run in parallel with the main function
+
+
+void Engine::startGameLoop() {
+  // Create a new thread that runs a game loop
+  std::thread gameLoop([this]() {
+    // This is the game loop. It will run indefinitely because of the "while (1)" condition
+    while (1) {
+      // Call the moveDown function of the Game instance (GM) to move the shape down
+      this->GM.moveDown();
+
+      // Pause the current thread for a duration equal to the value of the speed variable (in milliseconds)
+      // This creates a delay between each moveDown call, which controls the speed at which the shape moves down
+      std::this_thread::sleep_for(std::chrono::milliseconds(this->speed));
+    }
+  });
+
+  // Detach the game loop thread from the main thread
+  // This allows the game loop to run independently of the main thread, so it won't block other operations
+  gameLoop.detach();
 }
 
 void Engine::run() {
@@ -12,31 +38,30 @@ void Engine::run() {
     GM.StartScreen();
     return;
   }
+
   if (isPaused) {
     glutSwapBuffers();
-
     return;
   }
+
+  GM.drawScore();
+  GM.drawLevel();
 
   GM.removeLine();
   GM.drawGrid();
   GM.drawTetris();
-  GM.drawScore();
-  GM.drawLevel();
 
-  GM.moveDown();
+  if (!isGameLoopStarted) {
+    startGameLoop();
+    isGameLoopStarted = true;
+  }
 
   if (GM.isGameOver()) {
     GM.restart();
-    speed = 300;
   } else if (GM.getScore() >= GM.getLevel() * 500) {
     GM.levelUp();
-    if (speed >= 100) speed = 300 - 20;
+    if (speed > 100) speed = 300 - 20;
   }
-}
-
-int Engine::getSpeed() {
-  return speed;
 }
 
 void Engine::normalKey(unsigned char key, int x, int y) {

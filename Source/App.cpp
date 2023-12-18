@@ -13,10 +13,7 @@ void display() {
 }
 
 void updatingLoop(int value) {
-  // glutTimerFunc(eng.getSpeed(), updatingLoop, 0);
-  // make it 60 fps
-
-  glutTimerFunc(1000 / 60, updatingLoop, 0);
+  glutTimerFunc(1000 / 30, updatingLoop, 0);
 
   glutPostRedisplay();
 }

@@ -22,4 +22,6 @@ class Engine {
   void specialKey(int key, int x, int y);
   void startGame();
   void startGameLoop();
+  bool getIsStarted();
+  bool getIsPaused();
 };

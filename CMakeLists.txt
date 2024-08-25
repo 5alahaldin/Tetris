@@ -12,4 +12,5 @@ add_executable(App Source/App.cpp Source/Includes/game.cpp Source/Includes/engin
 # add_executable(Test Tests/test.cpp)
 target_link_libraries(App FreeGLUT::freeglut)
 # target_link_libraries(Test FreeGLUT::freeglut)
+   
 
